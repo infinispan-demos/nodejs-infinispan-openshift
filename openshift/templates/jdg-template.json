@@ -1,0 +1,420 @@
+{
+  "kind": "Template",
+  "apiVersion": "v1",
+  "metadata": {
+    "annotations": {
+      "iconClass": "icon-jboss",
+      "description": "Application template for Node.js plus JDG",
+      "tags": "datagrid,jboss,node.js,xpaas",
+      "version": "1.2.0"
+    },
+    "name": "jdg-nodejs"
+  },
+  "labels": {
+    "template": "jdg-nodejs",
+    "xpaas": "1.2.0"
+  },
+  "parameters": [
+    {
+      "description": "The name for the application.",
+      "name": "APPLICATION_NAME",
+      "value": "datagrid-app",
+      "required": true
+    },
+    {
+      "description": "User name for JDG user.",
+      "name": "USERNAME",
+      "value": "",
+      "required": false
+    },
+    {
+      "description": "Password for JDG user.",
+      "name": "PASSWORD",
+      "value": "",
+      "required": false
+    },
+    {
+      "description": "Comma-separated list of connector types that should be configured (defaults to 'hotrod,rest')",
+      "name": "INFINISPAN_CONNECTORS",
+      "value": "hotrod",
+      "required": false
+    },
+    {
+      "description": "Comma-separated list of caches to configure.  By default, a distributed-cache, with a mode of SYNC will be configured for each entry.",
+      "name": "CACHE_NAMES",
+      "value": "",
+      "required": false
+    },
+    {
+      "description": "",
+      "name": "ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH",
+      "value": "",
+      "required": false
+    },
+    {
+      "description": "The domain, declared in the security subsystem, that should be used to authenticate access to the REST endpoint",
+      "name": "REST_SECURITY_DOMAIN",
+      "value": "",
+      "required": false
+    },
+    {
+      "description": "JGroups cluster password",
+      "name": "JGROUPS_CLUSTER_PASSWORD",
+      "from": "[a-zA-Z0-9]{8}",
+      "generate": "expression",
+      "required": true
+    }
+  ],
+  "objects": [
+    {
+      "kind": "BuildConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "nodejs-jdg"
+      },
+      "spec": {
+        "source": {
+          "type": "Git",
+          "git": {
+            "uri": "https://github.com/gustavonalle/nodejs-jdg"
+          }
+        },
+        "strategy": {
+          "type": "Source",
+          "sourceStrategy": {
+            "from": {
+              "kind": "ImageStreamTag",
+              "namespace": "openshift",
+              "name": "nodejs:0.10"
+            }
+          }
+        },
+        "output": {
+          "to": {
+            "kind": "ImageStreamTag",
+            "name": "nodejs-jdg:latest"
+          }
+        },
+        "triggers": [
+          {
+            "type": "ImageChange"
+          },
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "GitHub",
+            "github": {
+              "secret": "${GITHUB_WEBHOOK_SECRET}"
+            }
+          },
+          {
+            "type": "Generic",
+            "generic": {
+              "secret": "${GENERIC_WEBHOOK_SECRET}"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "kind": "ImageStream",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "nodejs-jdg"
+      }
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "nodejs-jdg",
+        "labels": {
+          "app": "nodejs-jdg"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "updatePeriodSeconds": 1,
+            "intervalSeconds": 1,
+            "timeoutSeconds": 600,
+            "maxUnavailable": "25%",
+            "maxSurge": "25%"
+          },
+          "resources": {}
+        },
+        "triggers": [
+          {
+            "type": "ConfigChange"
+          },
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "nodejs-jdg"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "name": "nodejs-jdg:latest"
+              }
+            }
+          }
+        ],
+        "replicas": 2,
+        "selector": {
+          "app": "nodejs-jdg",
+          "deploymentconfig": "nodejs-jdg"
+        },
+        "template": {
+          "metadata": {
+            "labels": {
+              "app": "nodejs-jdg",
+              "deploymentconfig": "nodejs-jdg"
+            }
+          },
+          "spec": {
+            "containers": [
+              {
+                "name": "nodejs-jdg",
+                "image": "nodejs-jdg",
+                "ports": [
+                  {
+                    "containerPort": 8080,
+                    "protocol": "TCP"
+                  }
+                ],
+                "resources": {},
+                "imagePullPolicy": "Always"
+              }
+            ],
+            "restartPolicy": "Always",
+            "terminationGracePeriodSeconds": 30,
+            "dnsPolicy": "ClusterFirst",
+            "securityContext": {}
+          }
+        }
+      },
+      "status": {}
+    },
+    {
+      "kind": "DeploymentConfig",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "datagrid",
+        "labels": {
+          "application": "datagrid"
+        }
+      },
+      "spec": {
+        "strategy": {
+          "type": "Rolling",
+          "rollingParams": {
+            "timeoutSeconds": 600,
+            "maxSurge": "66%",
+            "maxUnavailable": "10%"
+          }
+        },
+        "triggers": [
+          {
+            "type": "ImageChange",
+            "imageChangeParams": {
+              "automatic": true,
+              "containerNames": [
+                "datagrid"
+              ],
+              "from": {
+                "kind": "ImageStreamTag",
+                "namespace": "openshift",
+                "name": "jboss-datagrid65-openshift:latest"
+              }
+            }
+          },
+          {
+            "type": "ConfigChange"
+          }
+        ],
+        "replicas": 5,
+        "selector": {
+          "deploymentConfig": "datagrid"
+        },
+        "template": {
+          "metadata": {
+            "name": "datagrid",
+            "labels": {
+              "deploymentConfig": "datagrid",
+              "application": "datagrid"
+            }
+          },
+          "spec": {
+            "terminationGracePeriodSeconds": 60,
+            "containers": [
+              {
+                "name": "datagrid",
+                "image": "jboss-datagrid65-openshift",
+                "imagePullPolicy": "Always",
+                "livenessProbe": {
+                  "exec": {
+                    "command": [
+                      "/bin/bash",
+                      "-c",
+                      "/opt/datagrid/bin/livenessProbe.sh"
+                    ]
+                  }
+                },
+                "readinessProbe": {
+                  "exec": {
+                    "command": [
+                      "/bin/bash",
+                      "-c",
+                      "/opt/datagrid/bin/readinessProbe.sh"
+                    ]
+                  }
+                },
+                "ports": [
+                  {
+                    "name": "jolokia",
+                    "containerPort": 8778,
+                    "protocol": "TCP"
+                  },
+                  {
+                    "name": "http",
+                    "containerPort": 8080,
+                    "protocol": "TCP"
+                  },
+                  {
+                    "name": "ping",
+                    "containerPort": 8888,
+                    "protocol": "TCP"
+                  },
+                  {
+                    "name": "hotrod",
+                    "containerPort": 11222,
+                    "protocol": "TCP"
+                  }
+                ],
+                "env": [
+                  {
+                    "name": "USERNAME",
+                    "value": "${USERNAME}"
+                  },
+                  {
+                    "name": "PASSWORD",
+                    "value": "${PASSWORD}"
+                  },
+                  {
+                    "name": "OPENSHIFT_KUBE_PING_LABELS",
+                    "value": "application=datagrid"
+                  },
+                  {
+                    "name": "OPENSHIFT_KUBE_PING_NAMESPACE",
+                    "valueFrom": {
+                      "fieldRef": {
+                        "fieldPath": "metadata.namespace"
+                      }
+                    }
+                  },
+                  {
+                    "name": "INFINISPAN_CONNECTORS",
+                    "value": "${INFINISPAN_CONNECTORS}"
+                  },
+                  {
+                    "name": "CACHE_NAMES",
+                    "value": "${CACHE_NAMES}"
+                  },
+                  {
+                    "name": "ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH",
+                    "value": "${ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH}"
+                  },
+                  {
+                    "name": "REST_SECURITY_DOMAIN",
+                    "value": "${REST_SECURITY_DOMAIN}"
+                  },
+                  {
+                    "name": "JGROUPS_CLUSTER_PASSWORD",
+                    "value": "${JGROUPS_CLUSTER_PASSWORD}"
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "spec": {
+        "ports": [
+          {
+            "port": 11333,
+            "targetPort": 11222
+          }
+        ],
+        "selector": {
+          "deploymentConfig": "datagrid"
+        }
+      },
+      "metadata": {
+        "name": "datagrid-hotrod",
+        "labels": {
+          "application": "datagrid"
+        },
+        "annotations": {
+          "description": "Hot Rod service for clustered applications."
+        }
+      }
+    },
+    {
+      "kind": "Service",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "nodejs-jdg",
+        "labels": {
+          "app": "nodejs-jdg"
+        }
+      },
+      "spec": {
+        "ports": [
+          {
+            "name": "8080-tcp",
+            "protocol": "TCP",
+            "port": 8080,
+            "targetPort": 8080
+          }
+        ],
+        "selector": {
+          "app": "nodejs-jdg",
+          "deploymentconfig": "nodejs-jdg"
+        },
+        "type": "ClusterIP",
+        "sessionAffinity": "None"
+      },
+      "status": {
+        "loadBalancer": {}
+      }
+    },
+    {
+      "kind": "Route",
+      "apiVersion": "v1",
+      "metadata": {
+        "name": "nodejs-jdg",
+        "labels": {
+          "app": "nodejs-jdg"
+        }
+      },
+      "spec": {
+        "to": {
+          "kind": "Service",
+          "name": "nodejs-jdg"
+        },
+        "port": {
+          "targetPort": 8080
+        }
+      },
+      "status": {}
+    }
+  ]
+}

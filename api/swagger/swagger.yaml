@@ -1,0 +1,49 @@
+swagger: "2.0"
+info:
+  version: "1.0"
+  title: Greeter
+host: localhost:8080
+basePath: /
+schemes:
+  - http
+consumes:
+  - application/json
+produces:
+  - application/json
+paths:
+  /greet:
+    x-swagger-router-controller: greeter
+    get:
+      description: Greets the caller
+      operationId: greet
+      parameters:
+        - name: name
+          in: query
+          description: The name of the person to be greeted
+          required: true
+          type: string
+      responses:
+        "200":
+          description: Success
+          schema:
+            $ref: "#/definitions/GreetResponse"
+        # responses may fall through to errors
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /swagger:
+    x-swagger-pipe: swagger_raw
+definitions:
+  GreetResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
+  ErrorResponse:
+    required:
+      - message
+    properties:
+      message:
+        type: string
