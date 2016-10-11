@@ -1,5 +1,5 @@
 {
-  "kind": "Template",
+  "kind": "List",
   "apiVersion": "v1",
   "metadata": {
     "annotations": {
@@ -14,7 +14,7 @@
     "template": "infinispan-nodejs",
     "xpaas": "1.2.0"
   },
-  "objects": [
+  "items": [
     {
       "kind": "BuildConfig",
       "apiVersion": "v1",
