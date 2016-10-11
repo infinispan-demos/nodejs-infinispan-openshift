@@ -21,11 +21,13 @@ $ oc process infinispan-nodejs | oc create -f -
 
 ### Test the service
 
-http://nodejs-infinispan-helloworld-msa.rhel-cdk.10.1.2.2.xip.io/greet?name=Hodor
+Acess the endpoint using the public IP, example:
+
+http://1.2.3.4.xip.io/greet?name=Hodor
 
 ### Swagger docs
 
-http://nodejs-infinispan-helloworld-msa.rhel-cdk.10.1.2.2.xip.io/docs/#/default
+http://1.2.3.4.10.1.2.2.xip.io/docs/#/default
 
 ### Test Rolling upgrades
 
