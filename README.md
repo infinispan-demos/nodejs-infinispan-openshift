@@ -12,7 +12,7 @@ http://127.0.0.1:8080/docs/
 ### Deploy project on Openshift via oc CLI
 
 ----
-$ git clone https://github.com/gustavonalle/nodejs-infinispan 
+$ git clone https://github.com/gustavonalle/nodejs-infinispan  
 $ oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)   
 $ oc create -f openshift/templates/infinispan-template.json  
 $ oc process infinispan-nodejs | oc create -f -   
