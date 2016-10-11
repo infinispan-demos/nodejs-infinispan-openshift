@@ -1,82 +1,33 @@
 {
-  "kind": "Template",
+  "kind": "List",
   "apiVersion": "v1",
   "metadata": {
     "annotations": {
       "iconClass": "icon-jboss",
-      "description": "Application template for Node.js plus JDG",
+      "description": "Application template for Node.js plus Infinispan",
       "tags": "datagrid,jboss,node.js,xpaas",
       "version": "1.2.0"
     },
-    "name": "jdg-nodejs"
+    "name": "infinispan-nodejs"
   },
   "labels": {
-    "template": "jdg-nodejs",
-    "xpaas": "1.2.0"
+    "app": "nodejs-infinispan"
   },
-  "parameters": [
-    {
-      "description": "The name for the application.",
-      "name": "APPLICATION_NAME",
-      "value": "datagrid-app",
-      "required": true
-    },
-    {
-      "description": "User name for JDG user.",
-      "name": "USERNAME",
-      "value": "",
-      "required": false
-    },
-    {
-      "description": "Password for JDG user.",
-      "name": "PASSWORD",
-      "value": "",
-      "required": false
-    },
-    {
-      "description": "Comma-separated list of connector types that should be configured (defaults to 'hotrod,rest')",
-      "name": "INFINISPAN_CONNECTORS",
-      "value": "hotrod",
-      "required": false
-    },
-    {
-      "description": "Comma-separated list of caches to configure.  By default, a distributed-cache, with a mode of SYNC will be configured for each entry.",
-      "name": "CACHE_NAMES",
-      "value": "",
-      "required": false
-    },
-    {
-      "description": "",
-      "name": "ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH",
-      "value": "",
-      "required": false
-    },
-    {
-      "description": "The domain, declared in the security subsystem, that should be used to authenticate access to the REST endpoint",
-      "name": "REST_SECURITY_DOMAIN",
-      "value": "",
-      "required": false
-    },
-    {
-      "description": "JGroups cluster password",
-      "name": "JGROUPS_CLUSTER_PASSWORD",
-      "from": "[a-zA-Z0-9]{8}",
-      "generate": "expression",
-      "required": true
-    }
-  ],
-  "objects": [
+  "items": [
     {
       "kind": "BuildConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nodejs-jdg"
+        "name": "nodejs-infinispan",
+        "labels": {
+          "app": "nodejs-infinispan"
+        }
       },
       "spec": {
         "source": {
           "type": "Git",
           "git": {
-            "uri": "https://github.com/gustavonalle/nodejs-jdg"
+            "uri": "https://github.com/gustavonalle/nodejs-infinispan"
           }
         },
         "strategy": {
@@ -92,7 +43,7 @@
         "output": {
           "to": {
             "kind": "ImageStreamTag",
-            "name": "nodejs-jdg:latest"
+            "name": "nodejs-infinispan:latest"
           }
         },
         "triggers": [
@@ -121,16 +72,19 @@
       "kind": "ImageStream",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nodejs-jdg"
+        "name": "nodejs-infinispan",
+        "labels": {
+          "app": "nodejs-infinispan"
+        }
       }
     },
     {
       "kind": "DeploymentConfig",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nodejs-jdg",
+        "name": "nodejs-infinispan",
         "labels": {
-          "app": "nodejs-jdg"
+          "app": "nodejs-infinispan"
         }
       },
       "spec": {
@@ -154,32 +108,32 @@
             "imageChangeParams": {
               "automatic": true,
               "containerNames": [
-                "nodejs-jdg"
+                "nodejs-infinispan"
               ],
               "from": {
                 "kind": "ImageStreamTag",
-                "name": "nodejs-jdg:latest"
+                "name": "nodejs-infinispan:latest"
               }
             }
           }
         ],
         "replicas": 2,
         "selector": {
-          "app": "nodejs-jdg",
-          "deploymentconfig": "nodejs-jdg"
+          "app": "nodejs-infinispan",
+          "deploymentconfig": "nodejs-infinispan"
         },
         "template": {
           "metadata": {
             "labels": {
-              "app": "nodejs-jdg",
-              "deploymentconfig": "nodejs-jdg"
+              "app": "nodejs-infinispan",
+              "deploymentconfig": "nodejs-infinispan"
             }
           },
           "spec": {
             "containers": [
               {
-                "name": "nodejs-jdg",
-                "image": "nodejs-jdg",
+                "name": "nodejs-infinispan",
+                "image": "nodejs-infinispan",
                 "ports": [
                   {
                     "containerPort": 8080,
@@ -205,7 +159,7 @@
       "metadata": {
         "name": "datagrid",
         "labels": {
-          "application": "datagrid"
+          "app": "nodejs-infinispan"
         }
       },
       "spec": {
@@ -219,20 +173,6 @@
         },
         "triggers": [
           {
-            "type": "ImageChange",
-            "imageChangeParams": {
-              "automatic": true,
-              "containerNames": [
-                "datagrid"
-              ],
-              "from": {
-                "kind": "ImageStreamTag",
-                "namespace": "openshift",
-                "name": "jboss-datagrid65-openshift:latest"
-              }
-            }
-          },
-          {
             "type": "ConfigChange"
           }
         ],
@@ -245,7 +185,7 @@
             "name": "datagrid",
             "labels": {
               "deploymentConfig": "datagrid",
-              "application": "datagrid"
+              "app": "nodejs-infinispan"
             }
           },
           "spec": {
@@ -253,32 +193,10 @@
             "containers": [
               {
                 "name": "datagrid",
-                "image": "jboss-datagrid65-openshift",
+                "image": "jboss/infinispan-server",
                 "imagePullPolicy": "Always",
-                "livenessProbe": {
-                  "exec": {
-                    "command": [
-                      "/bin/bash",
-                      "-c",
-                      "/opt/datagrid/bin/livenessProbe.sh"
-                    ]
-                  }
-                },
-                "readinessProbe": {
-                  "exec": {
-                    "command": [
-                      "/bin/bash",
-                      "-c",
-                      "/opt/datagrid/bin/readinessProbe.sh"
-                    ]
-                  }
-                },
+                "args" : ["cloud","-Djboss.default.jgroups.stack=kubernetes"],
                 "ports": [
-                  {
-                    "name": "jolokia",
-                    "containerPort": 8778,
-                    "protocol": "TCP"
-                  },
                   {
                     "name": "http",
                     "containerPort": 8080,
@@ -297,44 +215,12 @@
                 ],
                 "env": [
                   {
-                    "name": "USERNAME",
-                    "value": "${USERNAME}"
-                  },
-                  {
-                    "name": "PASSWORD",
-                    "value": "${PASSWORD}"
-                  },
-                  {
-                    "name": "OPENSHIFT_KUBE_PING_LABELS",
-                    "value": "application=datagrid"
-                  },
-                  {
                     "name": "OPENSHIFT_KUBE_PING_NAMESPACE",
                     "valueFrom": {
                       "fieldRef": {
                         "fieldPath": "metadata.namespace"
                       }
                     }
-                  },
-                  {
-                    "name": "INFINISPAN_CONNECTORS",
-                    "value": "${INFINISPAN_CONNECTORS}"
-                  },
-                  {
-                    "name": "CACHE_NAMES",
-                    "value": "${CACHE_NAMES}"
-                  },
-                  {
-                    "name": "ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH",
-                    "value": "${ENCRYPTION_REQUIRE_SSL_CLIENT_AUTH}"
-                  },
-                  {
-                    "name": "REST_SECURITY_DOMAIN",
-                    "value": "${REST_SECURITY_DOMAIN}"
-                  },
-                  {
-                    "name": "JGROUPS_CLUSTER_PASSWORD",
-                    "value": "${JGROUPS_CLUSTER_PASSWORD}"
                   }
                 ]
               }
@@ -360,7 +246,7 @@
       "metadata": {
         "name": "datagrid-hotrod",
         "labels": {
-          "application": "datagrid"
+          "app": "nodejs-infinispan"
         },
         "annotations": {
           "description": "Hot Rod service for clustered applications."
@@ -371,9 +257,9 @@
       "kind": "Service",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nodejs-jdg",
+        "name": "nodejs-infinispan",
         "labels": {
-          "app": "nodejs-jdg"
+          "app": "nodejs-infinispan"
         }
       },
       "spec": {
@@ -386,8 +272,8 @@
           }
         ],
         "selector": {
-          "app": "nodejs-jdg",
-          "deploymentconfig": "nodejs-jdg"
+          "app": "nodejs-infinispan",
+          "deploymentconfig": "nodejs-infinispan"
         },
         "type": "ClusterIP",
         "sessionAffinity": "None"
@@ -400,15 +286,15 @@
       "kind": "Route",
       "apiVersion": "v1",
       "metadata": {
-        "name": "nodejs-jdg",
+        "name": "nodejs-infinispan",
         "labels": {
-          "app": "nodejs-jdg"
+          "app": "nodejs-infinispan"
         }
       },
       "spec": {
         "to": {
           "kind": "Service",
-          "name": "nodejs-jdg"
+          "name": "nodejs-infinispan"
         },
         "port": {
           "targetPort": 8080
