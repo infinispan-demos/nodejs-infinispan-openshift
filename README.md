@@ -27,7 +27,7 @@ http://1.2.3.4.xip.io/greet?name=Hodor
 
 ### Swagger docs
 
-http://1.2.3.4.10.1.2.2.xip.io/docs/#/default
+http://1.2.3.4.xip.io/docs/#/default
 
 ### Test Rolling upgrades
 
