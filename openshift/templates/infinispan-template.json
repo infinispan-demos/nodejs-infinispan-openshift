@@ -168,20 +168,6 @@
         },
         "triggers": [
           {
-            "type": "ImageChange",
-            "imageChangeParams": {
-              "automatic": true,
-              "containerNames": [
-                "datagrid"
-              ],
-              "from": {
-                "kind": "ImageStreamTag",
-                "namespace": "openshift",
-                "name": "jboss-datagrid65-openshift:latest"
-              }
-            }
-          },
-          {
             "type": "ConfigChange"
           }
         ],
@@ -206,11 +192,6 @@
                 "imagePullPolicy": "Always",
                 "args" : ["cloud","-Djboss.default.jgroups.stack=kubernetes"],
                 "ports": [
-                  {
-                    "name": "jolokia",
-                    "containerPort": 8778,
-                    "protocol": "TCP"
-                  },
                   {
                     "name": "http",
                     "containerPort": 8080,
