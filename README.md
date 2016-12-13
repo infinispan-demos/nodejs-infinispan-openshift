@@ -6,7 +6,7 @@ NodeJS microservice with persistence on Infinispan
 
 * node app.js
 
-## Swagger docs
+### Swagger docs
 http://127.0.0.1:8080/docs/
 
 ## Deploy project on Openshift via oc CLI
