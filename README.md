@@ -27,11 +27,3 @@ http://1.2.3.4.xip.io/greet?name=Hodor
 ### Swagger docs
 
 http://1.2.3.4.xip.io/docs/#/default
-
-### Test Rolling upgrades
-
-First verify that everything is up and running in the web console. Next use:
-
-* `oc deploy datagrid --latest -n helloworld-msa` to rollout a new JDG cluster
-* `oc deploy nodejs-infinispan --latest -n helloworld-msa` needs to be done before fixing https://issues.jboss.org/browse/HRJS-17
-* Note that no data has been lost
