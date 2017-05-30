@@ -34,7 +34,7 @@ Install Openshift "all-in-one" cluster either by:
 ### Deploying the service
 
   ```
-   git clone https://github.com/gustavonalle/nodejs-infinispan  
+   git clone https://github.com/infinispan-demos/nodejs-infinispan-openshift/
    oc policy add-role-to-user view system:serviceaccount:$(oc project -q):default -n $(oc project -q)   
    oc create -f openshift/nodejs-infinispan.json 
    ```
